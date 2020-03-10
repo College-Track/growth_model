@@ -15,10 +15,10 @@ jupyter:
 
 # FY 20 Growth Model Updates
 
-Goal: Evaluate historical data from the past four fiscal years (FY16 -FY19) to determine more accurate averages for the following metrics:
+Goal: Evaluate historical data from the past four fiscal years (FY16 -FY19) to determine more accurate averages for the following metrics: 
 
 * Year to year high school retention rate
-    * i.e. The percent of students who continue on from their Junior to Sophomore year.
+    * i.e. The percent of students who continue on from their Junior to Sophomore year. 
 * Year to year college retntion rate
     * i.e. The percent of students who continue on from their four year to fifth year.
       * Note, this report will treat graduates and inactive students as the same. For example, 100 students are enrolled in their 4th year of college. At the start of their fifth year, 50 students have graduated, and 20 have dropped out (became inactive). The retention rate for 4th -> 5th year will be 30%.
@@ -31,12 +31,12 @@ from datetime import datetime
 import numpy as np
 
 
-import seaborn as sns
+import seaborn as sns 
 import matplotlib.pyplot as plt
-
 sns.set_style("white")
-```
 
+
+```
 
 ```python
 %matplotlib inline
@@ -62,8 +62,8 @@ df2 = pd.read_pickle(in_file2)
 df3 = pd.read_pickle(in_file3)
 
 df_active_students = pd.read_pickle(active_students)
-```
 
+```
 
 ```python
 total_enrollent_df = df_active_students.groupby(
@@ -78,52 +78,40 @@ total_enrollent_df = total_enrollent_df.pivot_table(
 ```
 
 ```python
-total_enrollent_df = total_enrollent_df.reset_index().sort_values("active_student")
+total_enrollent_df= total_enrollent_df.reset_index().sort_values('active_student')
 ```
 
 ## High School Data
 
 <!-- #region -->
 ### Chart 1. Average Total High School Enrollment
-This shows the average total enrollment at each site, broken out by each site's enrollment target.
+This shows the average total enrollment at each site, broken out by each site's enrollment target. 
 
 Using the prior logic, a site would meet their enrollment target if they retained 100% of their freshman, and sophomore students, 95% of their juniors, and 88% of their seniors. This would result in the following total numbers:
 
 * 75 Student Enrollment Target: 287
-* 60 Student Enrollment Target: 230
+* 60 Student Enrollment Target: 230 
+ 
 
+As we can see in the following chart, only San Francisco and New Orleans averaged hitting their full enrollment target in the past four years. 
 
-As we can see in the following chart, only San Francisco and New Orleans averaged hitting their full enrollment target in the past four years.
-
-Note, The Durant Center only has one cohort of students, which did exceed their cohort target.
+Note, The Durant Center only has one cohort of students, which did exceed their cohort target. 
 <!-- #endregion -->
 
 ```python
-fig, ax = plt.subplots(figsize=(12, 5))
+fig, ax = plt.subplots(figsize=(12,5))
 
 
-g = sns.barplot(
-    data=total_enrollent_df,
-    hue="enrollment_target",
-    x="Site",
-    y="active_student",
-    ax=ax,
-)
+g = sns.barplot(data = total_enrollent_df, hue='enrollment_target',
+               x='Site', y='active_student', ax=ax)
 
 
 g.set_xticklabels(g.get_xticklabels(), rotation=45)
-g.set_title("Average Total High School Enrollment")
+g.set_title('Average Total High School Enrollment')
 
 
 for p in g.patches:
-    g.annotate(
-        format(p.get_height(), ".0f"),
-        (p.get_x() + p.get_width() / 2.0, p.get_height()),
-        ha="center",
-        va="center",
-        xytext=(0, 10),
-        textcoords="offset points",
-    )
+    g.annotate(format(p.get_height(), '.0f'), (p.get_x() + p.get_width() / 2., p.get_height()), ha = 'center', va = 'center', xytext = (0, 10), textcoords = 'offset points')
 
 sns.despine()
 ```
@@ -134,8 +122,8 @@ This chart shows the average enrollment by each grade level, broken out by the e
 
 Key notes:
 
-* The general enrollment pattern is almost identical regardless of a site's cohort target. This means we can make more general enrollment projections.
-* Sites tend to increase their enrollment from Freshman to Sophomore year, with a small drop off from Sophomore to Junior year, but then a major (17%) decline from Junior to Senior year.
+* The general enrollment pattern is almost identical regardless of a site's cohort target. This means we can make more general enrollment projections. 
+* Sites tend to increase their enrollment from Freshman to Sophomore year, with a small drop off from Sophomore to Junior year, but then a major (17%) decline from Junior to Senior year. 
 
 ```python
 by_grade_df = df_active_students.groupby(
@@ -145,19 +133,22 @@ by_grade_df = df_active_students.groupby(
 # removing grades with less than 5 students as this could skew the results
 
 by_grade_df = by_grade_df[by_grade_df.active_student > 5]
-```
 
+
+```
 
 ```python
 grade_order = ["9th Grade", "10th Grade", "11th Grade", "12th Grade"]
 
 by_grade_df_table = by_grade_df.pivot_table(
-    index=["enrollment_target", "Grade (AT)"], values="active_student", aggfunc="mean"
+    index=["enrollment_target","Grade (AT)"], values="active_student", aggfunc="mean"
 )
 
-by_grade_df_table["pct_change"] = by_grade_df_table["active_student"].pct_change()
+by_grade_df_table["pct_change"] = by_grade_df_table[
+    "active_student"
+].pct_change()
 
-by_grade_df_table = by_grade_df_table.reindex(grade_order, level="Grade (AT)")
+by_grade_df_table =  by_grade_df_table.reindex(grade_order, level='Grade (AT)')
 ```
 
 ```python
@@ -165,35 +156,23 @@ by_grade_df_table = by_grade_df_table.reset_index()
 ```
 
 ```python
-fig, ax = plt.subplots(figsize=(12, 5))
+fig, ax = plt.subplots(figsize=(12,5))
 
-g = sns.barplot(
-    data=by_grade_df_table,
-    hue="enrollment_target",
-    x="Grade (AT)",
-    y="active_student",
-    ax=ax,
-)
+g = sns.barplot(data = by_grade_df_table, hue='enrollment_target',
+               x='Grade (AT)', y='active_student', ax=ax)
 
 
 for p in g.patches:
-    g.annotate(
-        format(p.get_height(), ".0f"),
-        (p.get_x() + p.get_width() / 2.0, p.get_height()),
-        ha="center",
-        va="center",
-        xytext=(0, 10),
-        textcoords="offset points",
-    )
-```
+    g.annotate(format(p.get_height(), '.0f'), (p.get_x() + p.get_width() / 2., p.get_height()), ha = 'center', va = 'center', xytext = (0, 10), textcoords = 'offset points')
 
+```
 
 ## College Data
 
 
 ### Chart 3. Average College Enrollment By Region and College Year
-
-These charts display the average college enrollment for the sites contained in each CT region. More mature regions, NOLA and Nor Cal, clearly have a similar trend in college numbers compared to younger regions.
+ 
+These charts display the average college enrollment for the sites contained in each CT region. More mature regions, NOLA and Nor Cal, clearly have a similar trend in college numbers compared to younger regions. 
 
 ```python
 ps_year_count = df3.pivot_table(
@@ -216,17 +195,15 @@ ps_year_count_grouped = ps_year_count.groupby(["Region", "Grade (AT)"]).mean()
 ps_year_count_grouped["change"] = (
     ps_year_count_grouped.groupby("Region")[True].pct_change().round(2) * 100
 )
-```
 
+```
 
 ```python
 ps_year_count_grouped = ps_year_count_grouped.reset_index()
 ```
 
 ```python
-sns.catplot(
-    data=ps_year_count_grouped, x="Grade (AT)", y=True, col="Region", kind="bar"
-)
+sns.catplot(data=ps_year_count_grouped, x='Grade (AT)', y=True , col='Region', kind='bar');
 ```
 
 ### Chart 4. Cohort Graduation Rates
@@ -259,11 +236,80 @@ grad_rates_region.round(2)
 
 ## Recommendations / Decision Points
 
+The previous version of the growth model actually had reasonably accurate assumptions for high school classes. The only major area it was off was Freshman recruitment rarely hit the total target, but Sophomore year backfill usually returned sites to near capacity. 
+
+The model was much more inaccurate when it came to college. Using historical data, the number of students dropping between Year 2 and Year 3 was much higher than originally estimated, as was the number of students either graduating or dropping after Year 4. 
+
+```python
+growth_model_assumptions = [1, 1, .85, .75, .75, .73, .67, .57, .43, .3]
+```
+
+```python
+average_rates = [54/60,59/60,54/60,45/60, 44/60, .69, .55, .51,.29,.14]
+```
+
+```python
+rate_comparison = pd.DataFrame(np.array([growth_model_assumptions, average_rates]),
+             columns=['Freshman', 'Sophomore', 'Junior', 'Senior', 'Year 1', 'Year 2', 'Year 3', 'Year 4', 'Year 5', 'Year 6'], index=['Growth Model Assumptions', 'Historical Averages'])
+```
+
+```python
+rate_comparison.round(2)
+```
+
+```python
+# Year 2 Calculation
+pre_year_rate = .75
+previous_year = 60*pre_year_rate
+
+this_year_rate = .085
+# previous_year * (1-this_year_rate) / 60
+```
+
+```python
+# Year 3 Calculation
+pre_year_rate = .69
+previous_year = 60*pre_year_rate
+
+this_year_rate = .1925
+# previous_year * (1-this_year_rate) / 60
+
+```
+
+```python
+# Year 3 Calculation
+pre_year_rate = .55
+previous_year = 60*pre_year_rate
+
+this_year_rate = .07
+# previous_year * (1-this_year_rate) / 60
+
+```
+
+```python
+# Year 5 Calculation
+pre_year_rate = .51
+previous_year = 60*pre_year_rate
+
+this_year_rate = .43
+# previous_year * (1-this_year_rate) / 60
+
+```
+
+```python
+# Year 6 Calculation
+pre_year_rate = .29
+previous_year = 60*pre_year_rate
+
+this_year_rate = .49
+# previous_year * (1-this_year_rate) / 60
+
+```
+
 ```html
 <script src="https://cdn.rawgit.com/parente/4c3e6936d0d7a46fd071/raw/65b816fb9bdd3c28b4ddf3af602bfd6015486383/code_toggle.js"></script>
 <style>
-# Uncomment before publishing
-# div.prompt {display:none}
+div.prompt {display:none}
 </style>
 ```
 
