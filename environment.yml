@@ -1,0 +1,11 @@
+name: growth_model
+dependencies:
+- python
+- autopep8
+- pip
+- pandas
+- matplotlib
+- jupyter
+- pip:
+- salesforce-reporting==0.1.3
+    
