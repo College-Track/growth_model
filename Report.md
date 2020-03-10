@@ -33,6 +33,7 @@ import numpy as np
 
 import seaborn as sns 
 import matplotlib.pyplot as plt
+sns.set(font_scale=1.5)
 sns.set_style("white")
 
 
@@ -99,6 +100,11 @@ Note, The Durant Center only has one cohort of students, which did exceed their 
 <!-- #endregion -->
 
 ```python
+total_enrollent_df.at[5, 'Site'] = 'PGC'
+total_enrollent_df.at[2, 'Site'] = 'EPA'
+```
+
+```python
 fig, ax = plt.subplots(figsize=(12,5))
 
 
@@ -106,9 +112,13 @@ g = sns.barplot(data = total_enrollent_df, hue='enrollment_target',
                x='Site', y='active_student', ax=ax)
 
 
-g.set_xticklabels(g.get_xticklabels(), rotation=45)
+g.set_xticklabels(g.get_xticklabels(), rotation=35)
 g.set_title('Average Total High School Enrollment')
 
+g.set_xlabel('Site')
+g.set_ylabel('Number of Students')
+
+ax.legend(loc='best', frameon=False)
 
 for p in g.patches:
     g.annotate(format(p.get_height(), '.0f'), (p.get_x() + p.get_width() / 2., p.get_height()), ha = 'center', va = 'center', xytext = (0, 10), textcoords = 'offset points')
@@ -156,14 +166,20 @@ by_grade_df_table = by_grade_df_table.reset_index()
 ```
 
 ```python
-fig, ax = plt.subplots(figsize=(12,5))
+fig, ax = plt.subplots(figsize=(14,10))
 
 g = sns.barplot(data = by_grade_df_table, hue='enrollment_target',
                x='Grade (AT)', y='active_student', ax=ax)
 
+g.set_xlabel('Grade')
+g.set_ylabel('Number of Students')
+ax.legend(loc='best', frameon=False)
+
+
+sns.despine()
 
 for p in g.patches:
-    g.annotate(format(p.get_height(), '.0f'), (p.get_x() + p.get_width() / 2., p.get_height()), ha = 'center', va = 'center', xytext = (0, 10), textcoords = 'offset points')
+    g.annotate(format(p.get_height(), '.0f'), (p.get_x() + p.get_width() / 2., p.get_height()-5), ha = 'center', va = 'center', xytext = (0, 10), textcoords = 'offset points')
 
 ```
 
@@ -203,6 +219,7 @@ ps_year_count_grouped = ps_year_count_grouped.reset_index()
 ```
 
 ```python
+
 sns.catplot(data=ps_year_count_grouped, x='Grade (AT)', y=True , col='Region', kind='bar');
 ```
 
