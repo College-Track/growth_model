@@ -433,6 +433,15 @@ h3, .h3 {
     font-size: 14px;
 }
 
+.output_png {
+  display: flex;
+  justify-content: center;
+}
+
+table {
+    display: inline-block
+}
+
 </style>
 ```
 
