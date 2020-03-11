@@ -13,16 +13,30 @@ jupyter:
     name: python3
 ---
 
+<!-- #region -->
 # FY 20 Growth Model Updates
 
 Goal: Evaluate historical data from the past four fiscal years (FY16 -FY19) to determine more accurate averages for the following metrics: 
 
-* Year to year high school retention rate
+* **Year to year high school retention rate**
     * i.e. The percent of students who continue on from their Junior to Sophomore year. 
-* Year to year college retntion rate
+
+
+* **Year to year college retention rate**
     * i.e. The percent of students who continue on from their four year to fifth year.
       * Note, this report will treat graduates and inactive students as the same. For example, 100 students are enrolled in their 4th year of college. At the start of their fifth year, 50 students have graduated, and 20 have dropped out (became inactive). The retention rate for 4th -> 5th year will be 30%.
-* Updated college graduation rates by high school class
+
+
+* **Updated college graduation rates by high school class**
+
+___ 
+*General Notes* 
+
+* Due to limitations in Salesforce's historical data structures, most of these data points were arrived at via proxy methods to determine if a student was active. For example high school students were considered active if they attended more than 5 classes in an academic year. This will result in numbers that might be slightly off from other historical data, but when possible we verified the numbers were as similar as possible. 
+
+
+* Likewise, these numbers might overestimate the count of students at a site due to these proxies compared to how Finance or OP just pulls data at a predetermined point in time. If Finance pulled a roster report in March, some of the students included in his analysis would likely have been removed. Moving forward the database is structured to make this type of reporting easier, but that wasn't possible using historical data.
+<!-- #endregion -->
 
 ```python
 import pandas as pd
@@ -36,6 +50,9 @@ import matplotlib.pyplot as plt
 sns.set(font_scale=1.5)
 sns.set_style("white")
 
+sns.set_context('talk')
+
+sns.set_palette("pastel")
 
 ```
 
@@ -66,6 +83,23 @@ df_active_students = pd.read_pickle(active_students)
 
 ```
 
+<!-- #region hide_input=false -->
+## Key Data and Decision Point
+<!-- #endregion -->
+
+```python hide_input=false
+average_rates = [54/60,59/60,54/60,45/60, 44/60, .69, .55, .51,.29,.14]
+```
+
+```python
+growth_model_assumptions = [1, 1, .85, .75, .75, .73, .67, .57, .43, .3]
+```
+
+```python
+rate_comparison = pd.DataFrame(np.array([growth_model_assumptions, average_rates]),
+             columns=['Freshman', 'Sophomore', 'Junior', 'Senior', 'Year 1', 'Year 2', 'Year 3', 'Year 4', 'Year 5', 'Year 6'], index=['Growth Model Assumptions', 'Historical Averages'])
+```
+
 ```python
 total_enrollent_df = df_active_students.groupby(
     ["Site", "Global Academic Year", "enrollment_target"], as_index=False
@@ -80,6 +114,18 @@ total_enrollent_df = total_enrollent_df.pivot_table(
 
 ```python
 total_enrollent_df= total_enrollent_df.reset_index().sort_values('active_student')
+```
+
+### Table 1. Growth Model Assumptions vs Historical Averages
+
+The previous version of the growth model actually had reasonably accurate assumptions for high school enrollment by grade. The only major area it was off was Freshman recruitment rarely hit the total target, but Sophomore year backfill usually returned sites to near capacity. 
+
+The model was much more inaccurate when it came to college. Using historical data, the number of students dropping between Year 2 and Year 3 was much higher than originally estimated, as was the number of students either graduating or dropping after Year 4. 
+
+* Note, the table below shows percentages of the original cohort target. For example, if a site had a target of 100 students, by Year 3, 67 students would be enrolled using the previous assumptions, or 55 students would still be enrolled using the historical averages
+
+```python
+rate_comparison.round(2).style.format('{:.0%}')
 ```
 
 ## High School Data
@@ -105,11 +151,11 @@ total_enrollent_df.at[2, 'Site'] = 'EPA'
 ```
 
 ```python
-fig, ax = plt.subplots(figsize=(12,5))
+fig, ax = plt.subplots(figsize=(12, 5))
 
 
-g = sns.barplot(data = total_enrollent_df, hue='enrollment_target',
-               x='Site', y='active_student', ax=ax)
+g = sns.barplot(data=total_enrollent_df, hue='enrollment_target',
+                x='Site', y='active_student', ax=ax)
 
 
 g.set_xticklabels(g.get_xticklabels(), rotation=35)
@@ -121,7 +167,8 @@ g.set_ylabel('Number of Students')
 ax.legend(loc='best', frameon=False)
 
 for p in g.patches:
-    g.annotate(format(p.get_height(), '.0f'), (p.get_x() + p.get_width() / 2., p.get_height()), ha = 'center', va = 'center', xytext = (0, 10), textcoords = 'offset points')
+    g.annotate(format(p.get_height(), '.0f'), (p.get_x() + p.get_width() / 2., p.get_height()),
+               ha='center', va='center', xytext=(0, 10), textcoords='offset points')
 
 sns.despine()
 ```
@@ -133,7 +180,7 @@ This chart shows the average enrollment by each grade level, broken out by the e
 Key notes:
 
 * The general enrollment pattern is almost identical regardless of a site's cohort target. This means we can make more general enrollment projections. 
-* Sites tend to increase their enrollment from Freshman to Sophomore year, with a small drop off from Sophomore to Junior year, but then a major (17%) decline from Junior to Senior year. 
+* Sites tend to increase their enrollment from Freshman to Sophomore year, with a small drop off from Sophomore to Junior year, but then a major (16%) decline from Junior to Senior year. 
 
 ```python
 by_grade_df = df_active_students.groupby(
@@ -145,6 +192,19 @@ by_grade_df = df_active_students.groupby(
 by_grade_df = by_grade_df[by_grade_df.active_student > 5]
 
 
+```
+
+```python
+def determine_percent_of_capacity(enrollment_target, active_student):
+    if enrollment_target == 'Enrollment Target: 60':
+        return active_student / 60 
+    elif enrollment_target == 'Enrollment Target: 75':
+        return active_student / 75
+```
+
+```python
+by_grade_df['enrollment_percentage'] = by_grade_df.apply(
+    lambda x: determine_percent_of_capacity(x['enrollment_target'], x['active_student']), axis=1)
 ```
 
 ```python
@@ -166,21 +226,26 @@ by_grade_df_table = by_grade_df_table.reset_index()
 ```
 
 ```python
-fig, ax = plt.subplots(figsize=(14,10))
+by_grade_df_table['enrollment_percentage'] = by_grade_df_table.apply(
+    lambda x: determine_percent_of_capacity(x['enrollment_target'], x['active_student']), axis=1)
+```
 
-g = sns.barplot(data = by_grade_df_table, hue='enrollment_target',
-               x='Grade (AT)', y='active_student', ax=ax)
+```python
+fig, ax = plt.subplots(figsize=(14, 6))
+
+g = sns.barplot(data=by_grade_df_table, hue='enrollment_target',
+                x='Grade (AT)', y='enrollment_percentage', ax=ax)
 
 g.set_xlabel('Grade')
-g.set_ylabel('Number of Students')
-ax.legend(loc='best', frameon=False)
+g.set_ylabel('% of Students')
+ax.legend(bbox_to_anchor=(1, 1), loc=2, borderaxespad=0., frameon=False)
 
 
 sns.despine()
 
 for p in g.patches:
-    g.annotate(format(p.get_height(), '.0f'), (p.get_x() + p.get_width() / 2., p.get_height()-5), ha = 'center', va = 'center', xytext = (0, 10), textcoords = 'offset points')
-
+    g.annotate(format(p.get_height(), '.0%'), (p.get_x() + p.get_width() / 2., p.get_height()),
+               ha='center', va='center', xytext=(0, 10), textcoords='offset points')
 ```
 
 ## College Data
@@ -189,6 +254,8 @@ for p in g.patches:
 ### Chart 3. Average College Enrollment By Region and College Year
  
 These charts display the average college enrollment for the sites contained in each CT region. More mature regions, NOLA and Nor Cal, clearly have a similar trend in college numbers compared to younger regions. 
+
+Note, each bar represents the percent of enrolled students from the original freshman class - thus the first bar for each region will be 100%. 
 
 ```python
 ps_year_count = df3.pivot_table(
@@ -215,12 +282,40 @@ ps_year_count_grouped["change"] = (
 ```
 
 ```python
+
 ps_year_count_grouped = ps_year_count_grouped.reset_index()
 ```
 
 ```python
+ps_year_count_grouped['Percent of Freshman Cohort'] = ps_year_count_grouped.groupby('Region')[True].apply(lambda x: x.div(x.iloc[0]).subtract(1).add(1))
 
-sns.catplot(data=ps_year_count_grouped, x='Grade (AT)', y=True , col='Region', kind='bar');
+```
+
+```python
+ps_year_count_grouped.loc[ps_year_count_grouped['Percent of Freshman Cohort'] == 0, 'Percent of Freshman Cohort'] = 1
+```
+
+```python
+
+g = sns.catplot(data=ps_year_count_grouped, x='Grade (AT)',
+            y='Percent of Freshman Cohort', col='Region', kind='bar', height=10, aspect=.75);
+for ax in g.axes.flat:
+    ax.set_title(ax.get_title(), fontsize='large')
+#     ax.set_ylabel("Percent of Freshman Cohort",fontsize=22)
+    ax.set_xlabel("",fontsize=22)
+    ax.tick_params(labelsize=22)
+
+        
+    for p in ax.patches:
+        ax.annotate(format(p.get_height(), '.0%'), (p.get_x() + p.get_width() / 2., p.get_height()),
+               ha='center', va='center', xytext=(0, 10), textcoords='offset points')
+
+    
+    for item in ([ax.title, ax.xaxis.label, ax.yaxis.label] +
+              ax.get_xticklabels() + ax.get_yticklabels()):
+        item.set_fontsize(26)
+    
+
 ```
 
 ### Chart 4. Cohort Graduation Rates
@@ -243,35 +338,12 @@ def create_rate_table(df, groupings, level, columns):
 ```python
 grad_rates_class = create_rate_table(df2, ["High School Class"], 1, list(range(4, 8)))
 
-grad_rates_class.round(2)
+grad_rates_class.round(2).style.format('{:.0%}')
 ```
 
 ```python
 grad_rates_region = create_rate_table(df2, ["Region"], 1, list(range(4, 8)))
-grad_rates_region.round(2)
-```
-
-## Recommendations / Decision Points
-
-The previous version of the growth model actually had reasonably accurate assumptions for high school classes. The only major area it was off was Freshman recruitment rarely hit the total target, but Sophomore year backfill usually returned sites to near capacity. 
-
-The model was much more inaccurate when it came to college. Using historical data, the number of students dropping between Year 2 and Year 3 was much higher than originally estimated, as was the number of students either graduating or dropping after Year 4. 
-
-```python
-growth_model_assumptions = [1, 1, .85, .75, .75, .73, .67, .57, .43, .3]
-```
-
-```python
-average_rates = [54/60,59/60,54/60,45/60, 44/60, .69, .55, .51,.29,.14]
-```
-
-```python
-rate_comparison = pd.DataFrame(np.array([growth_model_assumptions, average_rates]),
-             columns=['Freshman', 'Sophomore', 'Junior', 'Senior', 'Year 1', 'Year 2', 'Year 3', 'Year 4', 'Year 5', 'Year 6'], index=['Growth Model Assumptions', 'Historical Averages'])
-```
-
-```python
-rate_comparison.round(2)
+grad_rates_region.round(2).style.format('{:.0%}')
 ```
 
 ```python
@@ -325,8 +397,42 @@ this_year_rate = .49
 
 ```html
 <script src="https://cdn.rawgit.com/parente/4c3e6936d0d7a46fd071/raw/65b816fb9bdd3c28b4ddf3af602bfd6015486383/code_toggle.js"></script>
+
+```
+
+```html
+
 <style>
-div.prompt {display:none}
+// div.prompt {display:none}
+
+
+h1, .h1 {
+    font-size: 33px;
+    font-family: "Trebuchet MS";
+    font-size: 2.5em !important;
+    color: #2a7bbd;
+}
+
+h2, .h2 {
+    font-size: 10px;
+    font-family: "Trebuchet MS";
+    color: #2a7bbd; 
+    
+}
+
+
+h3, .h3 {
+    font-size: 10px;
+    font-family: "Trebuchet MS";
+    color: #5d6063; 
+    
+}
+
+.rendered_html table {
+
+    font-size: 14px;
+}
+
 </style>
 ```
 
