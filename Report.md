@@ -19,11 +19,11 @@ jupyter:
 Goal: Evaluate historical data from the past four fiscal years (FY16 -FY19) to determine more accurate averages for the following metrics: 
 
 * **Year to year high school retention rate**
-    * i.e. The percent of students who continue on from their Junior to Sophomore year. 
+    * i.e. The percent of students who continue from their Junior to Sophomore year. 
 
 
 * **Year to year college retention rate**
-    * i.e. The percent of students who continue on from their four year to fifth year.
+    * i.e. The percent of students who continue from their four year to fifth year.
       * Note, this report will treat graduates and inactive students as the same. For example, 100 students are enrolled in their 4th year of college. At the start of their fifth year, 50 students have graduated, and 20 have dropped out (became inactive). The retention rate for 4th -> 5th year will be 30%.
 
 
@@ -118,7 +118,7 @@ total_enrollent_df= total_enrollent_df.reset_index().sort_values('active_student
 
 ### Table 1. Growth Model Assumptions vs Historical Averages
 
-The previous version of the growth model actually had reasonably accurate assumptions for high school enrollment by grade. The only major area it was off was Freshman recruitment rarely hit the total target, but Sophomore year backfill usually returned sites to near capacity. 
+The previous version of the growth model had reasonably accurate assumptions for high school enrollment by grade. The only major area it was off was Freshman recruitment rarely hit the total target, but Sophomore year backfill usually returned sites to near capacity. 
 
 The model was much more inaccurate when it came to college. Using historical data, the number of students dropping between Year 2 and Year 3 was much higher than originally estimated, as was the number of students either graduating or dropping after Year 4. 
 
@@ -130,11 +130,11 @@ rate_comparison.round(2).style.format('{:.0%}')
 
 ### Table 2. Projections vs Actuals
 
-This table show the projected student count based entirely on the models assumptions compared to the actuals for the past four fiscal years.
+This table shows the projected student count based entirely on the model's assumptions compared to the actuals for the past four fiscal years.
 
-Using the historical averages, the student count projections is roughly 20-50 students off per year. 
+Using the historical averages, the student count projections are roughly 20-50 students off per year. 
 
-Using the old growth model assumptions, the student count projections is off by around 300 students per year.
+Using the old growth model assumptions, the student count projections are off by around 300 students per year.
 
 ```python
 enrollment_target_and_actuals = {'Enrollment Target: 75':[71, 75],
@@ -216,11 +216,6 @@ projections_vs_actuals.columns = ['FY16', 'FY17', 'FY18', 'FY19']
 projections_vs_actuals
 ```
 
-```python
-for site in sites['Site']:
-    fy16.append(determine_total_enrollment_site(site, 16))
-```
-
 ## High School Data
 
 <!-- #region -->
@@ -270,7 +265,7 @@ sns.despine()
 
 This chart shows the average enrollment by each grade level, broken out by the enrollment target for sites.
 
-Key notes:
+Key Observations:
 
 * The general enrollment pattern is almost identical regardless of a site's cohort target. This means we can make more general enrollment projections. 
 * Sites tend to increase their enrollment from Freshman to Sophomore year, with a small drop off from Sophomore to Junior year, but then a major (16%) decline from Junior to Senior year. 
@@ -349,9 +344,9 @@ for p in g.patches:
 
 ### Chart 3. Average College Enrollment By Region and College Year
  
-These charts display the average college enrollment for the sites contained in each CT region. More mature regions, NOLA and Nor Cal, clearly have a similar trend in college numbers compared to younger regions. 
+These charts display the average college enrollment for the sites contained in each CT region. More mature regions, NOLA and NorCal, clearly have a similar trend in college numbers compared to younger regions. 
 
-Note, each bar represents the percent of enrolled students from the original freshman class - thus the first bar for each region will be 100%. 
+Note, each bar represents the percentage of enrolled students from the original freshman class - thus the first bar for each region will be 100%. 
 
 ```python
 ps_year_count = df3.pivot_table(
@@ -394,29 +389,43 @@ ps_year_count_grouped.loc[ps_year_count_grouped['Percent of Freshman Cohort'] ==
 ```python
 
 g = sns.catplot(data=ps_year_count_grouped, x='Grade (AT)',
-            y='Percent of Freshman Cohort', col='Region', kind='bar', height=10, aspect=.75);
+            y='Percent of Freshman Cohort', col='Region', kind='bar', height=5, aspect=1, col_wrap=2);
 for ax in g.axes.flat:
     ax.set_title(ax.get_title(), fontsize='large')
 #     ax.set_ylabel("Percent of Freshman Cohort",fontsize=22)
-    ax.set_xlabel("",fontsize=22)
-    ax.tick_params(labelsize=22)
+    ax.set_xlabel("",fontsize=14)
+    ax.tick_params(labelsize=14)
 
         
     for p in ax.patches:
         ax.annotate(format(p.get_height(), '.0%'), (p.get_x() + p.get_width() / 2., p.get_height()),
-               ha='center', va='center', xytext=(0, 10), textcoords='offset points')
+               ha='center', va='center', xytext=(0, 10), textcoords='offset points').set_fontsize(14)
         ax.set_yticklabels(['{:,.0%}'.format(x) for x in ax.get_yticks()])
 
 
     
     for item in ([ax.title, ax.xaxis.label, ax.yaxis.label] +
               ax.get_xticklabels() + ax.get_yticklabels()):
-        item.set_fontsize(26)
+        item.set_fontsize(14)
     
 
 ```
 
-### Chart 4. Cohort Graduation Rates
+<!-- #region -->
+### Table 3  and 4. Cohort  and Region Graduation Rates
+
+These two tables list the actual graduation rates for each high school class and more generally by region. They don't impact the overall growth model projections other than informing if it makes sense to make graduation projections region-specific or to estimate if our overall graduation rates are trending up or down. 
+
+For the first point, I'm hesitant to make a recommendation on region-specific graduation projections yet. I say this for two reasons: 
+* First, Colorado and LA are not mature yet, and their data will heavily impact the necessity for region-specific graduation rates. 
+
+
+* Second, NOLA and NorCal do look like they have reasonably different graduation rates, but their overall enrollment percentages (see Chart 3) are reasonably similar. This means that while NOLA has fewer students graduating, the total percentage of students remains similar. This likely is because they have more students dropping out instead of graduating. While this is an important point for programmatic reasons, it isn't influencing overall projections in a dramatic way to warrant the complications introduced with differentiating region projections 
+
+
+For the second point, the overall trend in graduation rates doesn't seem notable in either direction and has mostly remained flat as enrollment increases and data becomes more reliable. 
+
+<!-- #endregion -->
 
 ```python
 def create_rate_table(df, groupings, level, columns):
