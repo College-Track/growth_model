@@ -213,7 +213,7 @@ projections_vs_actuals.columns = ['FY16', 'FY17', 'FY18', 'FY19']
 ```
 
 ```python
-projections_vs_actuals
+projections_vs_actuals.style.format("{:,.0f}")
 ```
 
 ## High School Data
@@ -545,9 +545,7 @@ h3, .h3 {
   justify-content: center;
 }
 
-table {
-    display: inline-block
-}
+
 
 </style>
 ```
