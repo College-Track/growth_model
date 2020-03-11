@@ -14,7 +14,7 @@ jupyter:
 ---
 
 <!-- #region -->
-# FY 20 Growth Model Updates
+# FY20 Growth Model Updates
 
 Goal: Evaluate historical data from the past four fiscal years (FY16 -FY19) to determine more accurate averages for the following metrics: 
 
@@ -126,6 +126,99 @@ The model was much more inaccurate when it came to college. Using historical dat
 
 ```python
 rate_comparison.round(2).style.format('{:.0%}')
+```
+
+### Table 2. Projections vs Actuals
+
+This table show the projected student count based entirely on the models assumptions compared to the actuals for the past four fiscal years.
+
+Using the historical averages, the student count projections is roughly 20-50 students off per year. 
+
+Using the old growth model assumptions, the student count projections is off by around 300 students per year.
+
+```python
+enrollment_target_and_actuals = {'Enrollment Target: 75':[71, 75],
+                                 'Enrollment Target: 60':[54,60]
+    
+}
+```
+
+```python
+sites = df[['Site', 'enrollment_target']].drop_duplicates()
+site_start_year = {'Oakland': 'full',
+                   'East Palo Alto': 'full',
+                   'Denver': 16, 
+                   'San Francisco': 'full',
+                   'Sacramento': 15,
+                   'Aurora': 12,
+                   'Watts': 16,
+                   'Boyle Heights':13,
+                   'The Durant Center':19,
+                   'New Orleans': 11
+                  }
+
+
+```
+
+```python
+def determine_total_enrollment_site(site, fy, target_type):
+    start_year = site_start_year[site]
+    target = sites[sites['Site'] == site]['enrollment_target'].values[0]
+    if target_type == 'historical':
+        target_actual = enrollment_target_and_actuals[target][0]
+        target_index = 1
+    elif target_type == 'growth_model':
+        target_actual = enrollment_target_and_actuals[target][1]
+        target_index = 0
+    
+    if start_year == 'full':
+        return sum(target_actual * rate_comparison.iloc[1])
+
+    else:
+        start_year_index = fy - start_year
+        if start_year_index >= 0:
+            return sum(target_actual * rate_comparison.iloc[target_index,:(1+start_year_index)])
+        else: 
+            return 0
+
+
+    
+    
+```
+
+```python
+predictions = {
+    'fy 16': [0,0, 2267],
+    'fy 17': [0,0, 2431],
+    'fy 18': [0,0, 2698],
+    'fy 19': [0,0, 3003],
+}
+```
+
+```python
+for key in historical_predictions.keys():
+    fy = int(key.split(" ")[1])
+    for site in sites['Site']:
+        predictions[key][0] += (determine_total_enrollment_site(site,fy,'historical'))
+        predictions[key][1] += (determine_total_enrollment_site(site,fy,'growth_model'))
+    
+```
+
+```python
+projections_vs_actuals = pd.DataFrame(predictions, index=['Historical Averages', "Old Growth Model", "Actuals"]).astype(int)
+```
+
+```python
+projections_vs_actuals.columns = ['FY16', 'FY17', 'FY18', 'FY19']
+```
+
+```python
+projections_vs_actuals
+```
+
+```python
+for site in sites['Site']:
+    fy16.append(determine_total_enrollment_site(site, 16))
 ```
 
 ## High School Data
@@ -241,6 +334,9 @@ g.set_ylabel('% of Students')
 ax.legend(bbox_to_anchor=(1, 1), loc=2, borderaxespad=0., frameon=False)
 
 
+ax.set_yticklabels(['{:,.0%}'.format(x) for x in ax.get_yticks()])
+
+
 sns.despine()
 
 for p in g.patches:
@@ -309,6 +405,8 @@ for ax in g.axes.flat:
     for p in ax.patches:
         ax.annotate(format(p.get_height(), '.0%'), (p.get_x() + p.get_width() / 2., p.get_height()),
                ha='center', va='center', xytext=(0, 10), textcoords='offset points')
+        ax.set_yticklabels(['{:,.0%}'.format(x) for x in ax.get_yticks()])
+
 
     
     for item in ([ax.title, ax.xaxis.label, ax.yaxis.label] +
@@ -403,7 +501,7 @@ this_year_rate = .49
 ```html
 
 <style>
-// div.prompt {display:none}
+div.prompt {display:none}
 
 
 h1, .h1 {
@@ -443,8 +541,4 @@ table {
 }
 
 </style>
-```
-
-```python
-
 ```
