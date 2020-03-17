@@ -68,27 +68,24 @@ df_active_students = pd.read_pickle(active_students)
 
 #### HS Retention (File 1)
 
-<!-- #region heading_collapsed=true -->
-##### Average Total Enrollment
-<!-- #endregion -->
 
-```python hidden=true
+##### Average Total Enrollment
+
+```python
 total_enrollent_df = df_active_students.groupby(
     ["Site", "Global Academic Year", "enrollment_target"], as_index=False
 ).sum()
 ```
 
-```python hidden=true
+```python
 total_enrollent_df.pivot_table(
     index=["enrollment_target", "Site"], values="active_student", aggfunc="mean"
 )
 ```
 
-<!-- #region heading_collapsed=true -->
 ##### Average Enrollment By Grade
-<!-- #endregion -->
 
-```python hidden=true
+```python
 by_grade_df = df_active_students.groupby(
     ["Site", "Grade (AT)", "Global Academic Year", "enrollment_target"], as_index=False
 ).sum()
@@ -100,14 +97,14 @@ by_grade_df = by_grade_df[by_grade_df.active_student > 5]
 
 ```
 
-```python hidden=true
+```python
 grade_order = ["9th Grade", "10th Grade", "11th Grade", "12th Grade"]
 
 by_grade_df_table = by_grade_df.pivot_table(
-    index=["enrollment_target","Grade (AT)"], values="active_student", aggfunc="mean"
+    index=["Grade (AT)"], values="active_student", aggfunc="mean"
 )
 
-by_grade_df_table = by_grade_df_table.reindex(grade_order, level='Grade (AT)')
+by_grade_df_table = by_grade_df_table.reindex(grade_order)
 
 by_grade_df_table["pct_change"] = by_grade_df_table[
     "active_student"
@@ -198,7 +195,7 @@ grad_rates_region
 grad_rates_all_time = df2[df2.columns[4:8]].apply(pd.Series.value_counts)
 
 grad_rates_all_time = grad_rates_all_time.apply(lambda x: x / x.sum())
-grad_rates_all_time = grad_rates_all_time.drop(index=[False, "NA"])
+grad_rates_all_time = grad_rates_all_time.drop(index=[False])
 
 grad_rates_all_time
 ```
